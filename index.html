@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="COMRADE MKT administration portal.">
+  <title>COMRADE MKT | CEO Admin Portal</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <header class="admin-topbar">
+    <a class="brand" href="https://buppiereigns.github.io/comrade-mkt/"><span class="brand-mark">C</span><span>COMRADE <b>MKT</b></span></a>
+    <span class="portal-label">ADMINISTRATION</span>
+    <button id="logoutButton" class="button button-quiet hidden" type="button">Log out</button>
+  </header>
+
+  <main class="admin-main">
+    <section id="loginPanel" class="login-panel">
+      <div class="eyebrow">RESTRICTED ACCESS</div>
+      <h1>CEO sign in</h1>
+      <p>Sign in with the CEO account registered in the COMRADE MKT administrator list.</p>
+      <form id="loginForm">
+        <label>Email address<input name="email" type="email" autocomplete="username" required placeholder="CEO email"></label>
+        <label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="Your password"></label>
+        <button id="loginSubmit" class="button button-primary button-full" type="submit">Sign in securely</button>
+      </form>
+      <p id="loginMessage" class="message" role="status"></p>
+      <a class="back-link" href="https://buppiereigns.github.io/comrade-mkt/">← Back to marketplace</a>
+    </section>
+
+    <section id="dashboard" class="dashboard hidden">
+      <div class="dashboard-heading">
+        <div><div class="eyebrow">COMRADE MKT CONTROL CENTRE</div><h1>CEO dashboard</h1><p id="welcomeText">Administrator access verified.</p></div>
+        <span class="secure-label">✓ CEO verified</span>
+      </div>
+      <div class="stat-grid">
+        <article class="stat-card"><span>Active listings</span><strong id="activeCount">—</strong><small>Currently visible in marketplace</small></article>
+        <article class="stat-card"><span>Administrator status</span><strong class="status-word">Verified</strong><small>Your account is on the admin list</small></article>
+      </div>
+      <section class="panel">
+        <div class="panel-heading"><div><h2>Marketplace listings</h2><p>Active listings currently accessible under the marketplace's existing policies.</p></div><button id="refreshButton" class="button button-outline" type="button">Refresh</button></div>
+        <div id="listingMessage" class="message" role="status">Loading listings…</div>
+        <div class="table-wrap"><table><thead><tr><th>Item</th><th>Price</th><th>Category</th><th>Seller</th></tr></thead><tbody id="listingRows"></tbody></table></div>
+      </section>
+      <p class="footnote">Moderation, student management and payout controls will be enabled only after their database permissions and safeguards are configured.</p>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
