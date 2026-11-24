@@ -59,7 +59,7 @@ async function viewStudentActivity(id){
 document.getElementById('loadStudentsButton').addEventListener('click',loadStudents);
 document.getElementById('studentSearch').addEventListener('input',renderStudents);
 document.getElementById('studentRows').addEventListener('click',event=>{const button=event.target.closest('[data-student-id]');if(button)viewStudentActivity(button.dataset.studentId);});
-\nasync function handleSession(session){if(!session?.user){showLogin();return;}try{await verifyAdmin(session.user);showDashboard(session.user);await loadDashboardData();}catch(e){await db.auth.signOut();showLogin(e.message,true);}}
+async function handleSession(session){if(!session?.user){showLogin();return;}try{await verifyAdmin(session.user);showDashboard(session.user);await loadDashboardData();}catch(e){await db.auth.signOut();showLogin(e.message,true);}}
 loginForm.addEventListener('submit',async e=>{e.preventDefault();const b=document.getElementById('loginSubmit'),f=new FormData(loginForm);b.disabled=true;b.textContent='Verifying…';loginMessage.textContent='';const {data,error}=await db.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});b.disabled=false;b.textContent='Sign in securely';if(error){showLogin(error.message,true);return;}await handleSession(data.session);});
 logoutButton.addEventListener('click',async()=>{await db.auth.signOut();showLogin('You have signed out.');});
 document.getElementById('refreshButton').addEventListener('click',loadDashboardData);
