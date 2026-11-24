@@ -33,7 +33,33 @@ async function loadDashboardData(){
  if(!pr.error&&!ar.error&&!sr.error&&!ur.error){listingMessage.textContent='Overview updated successfully. Showing the latest '+items.length+' listings.';listingMessage.className='message success';}
  document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
 }
-async function handleSession(session){if(!session?.user){showLogin();return;}try{await verifyAdmin(session.user);showDashboard(session.user);await loadDashboardData();}catch(e){await db.auth.signOut();showLogin(e.message,true);}}
+
+let studentProfiles=[];
+async function loadStudents(){
+ const button=document.getElementById('loadStudentsButton'),message=document.getElementById('studentMessage'),rows=document.getElementById('studentRows');
+ button.disabled=true;message.textContent='Loading student profiles…';message.className='message';
+ const {data,error}=await db.from('profiles').select('id,display_name,created_at').order('created_at',{ascending:false}).limit(500);
+ button.disabled=false;
+ if(error){message.textContent='Could not load student profiles: '+error.message;message.className='message error';return;}
+ studentProfiles=data||[];renderStudents();
+ message.textContent='Loaded '+studentProfiles.length+' student profiles (maximum 500).';message.className='message success';
+}
+function renderStudents(){
+ const term=document.getElementById('studentSearch').value.trim().toLowerCase();
+ const matches=studentProfiles.filter(p=>String(p.display_name||'').toLowerCase().includes(term)||String(p.id||'').toLowerCase().includes(term));
+ document.getElementById('studentRows').innerHTML=matches.map(p=>'<tr><td><strong>'+escapeHtml(p.display_name||'Unnamed student')+'</strong><small class="student-id">'+escapeHtml(p.id)+'</small></td><td>'+ (p.created_at?new Date(p.created_at).toLocaleDateString('en-KE'):'—')+'</td><td><button class="button button-outline button-small" type="button" data-student-id="'+escapeHtml(p.id)+'">View activity</button></td></tr>').join('')||'<tr><td colspan="3">No matching students found.</td></tr>';
+}
+async function viewStudentActivity(id){
+ const panel=document.getElementById('studentActivity');panel.classList.remove('hidden');panel.textContent='Loading student activity…';
+ const {data,error}=await db.from('products').select('title,status,created_at,price').eq('seller_id',id).order('created_at',{ascending:false}).limit(50);
+ if(error){panel.textContent='Could not load student activity: '+error.message;return;}
+ const items=data||[];
+ panel.innerHTML='<h3>Listing activity</h3><p>'+items.length+' listings found (maximum 50).</p>'+(items.length?'<ul>'+items.map(x=>'<li><strong>'+escapeHtml(x.title)+'</strong> — '+money(x.price)+' · '+escapeHtml(x.status)+' · '+(x.created_at?new Date(x.created_at).toLocaleDateString('en-KE'):'')+'</li>').join('')+'</ul>':'<p>This student has no listings.</p>');
+}
+document.getElementById('loadStudentsButton').addEventListener('click',loadStudents);
+document.getElementById('studentSearch').addEventListener('input',renderStudents);
+document.getElementById('studentRows').addEventListener('click',event=>{const button=event.target.closest('[data-student-id]');if(button)viewStudentActivity(button.dataset.studentId);});
+\nasync function handleSession(session){if(!session?.user){showLogin();return;}try{await verifyAdmin(session.user);showDashboard(session.user);await loadDashboardData();}catch(e){await db.auth.signOut();showLogin(e.message,true);}}
 loginForm.addEventListener('submit',async e=>{e.preventDefault();const b=document.getElementById('loginSubmit'),f=new FormData(loginForm);b.disabled=true;b.textContent='Verifying…';loginMessage.textContent='';const {data,error}=await db.auth.signInWithPassword({email:String(f.get('email')).trim(),password:String(f.get('password'))});b.disabled=false;b.textContent='Sign in securely';if(error){showLogin(error.message,true);return;}await handleSession(data.session);});
 logoutButton.addEventListener('click',async()=>{await db.auth.signOut();showLogin('You have signed out.');});
 document.getElementById('refreshButton').addEventListener('click',loadDashboardData);
