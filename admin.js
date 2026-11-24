@@ -12,15 +12,15 @@ function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;',
 function metric(id,v){document.getElementById(id).textContent=v==null?'—':Number(v).toLocaleString('en-KE');}
 async function loadDashboardData(){
  const refresh=document.getElementById('refreshButton');refresh.disabled=true;listingMessage.textContent='Loading marketplace figures…';listingMessage.className='message';
- const [pr,ur]=await Promise.all([db.from('products').select('id,title,price,category,seller_id,status,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(50),db.from('profiles').select('id',{count:'exact',head:true})]);
+ const [pr,ar,sr,ur]=await Promise.all([db.from('products').select('id,title,price,category,seller_id,status,created_at',{count:'exact'}).order('created_at',{ascending:false}).limit(50),db.from('products').select('id',{count:'exact',head:true}).eq('status','active'),db.from('products').select('id',{count:'exact',head:true}).eq('status','sold'),db.from('profiles').select('id',{count:'exact',head:true})]);
  refresh.disabled=false;
  if(pr.error){listingMessage.textContent='Could not load listings: '+pr.error.message+'. Check the dashboard database setup.';listingMessage.className='message error';return;}
- if(ur.error){listingMessage.textContent='Listings loaded, but student profile count is unavailable: '+ur.error.message+'. Check the dashboard database setup.';listingMessage.className='message error';}
+ if(ar.error||sr.error||ur.error){const issue=[ar.error,sr.error,ur.error].filter(Boolean)[0];listingMessage.textContent='Some overview figures are unavailable: '+issue.message+'. Check the dashboard database setup.';listingMessage.className='message error';}
  const items=pr.data||[];
- metric('totalCount',pr.count??items.length);metric('activeCount',items.filter(x=>x.status==='active').length);metric('soldCount',items.filter(x=>x.status==='sold').length);metric('studentCount',ur.error?null:(ur.count??0));
+ metric('totalCount',pr.count??items.length);metric('activeCount',ar.error?null:(ar.count??0));metric('soldCount',sr.error?null:(sr.count??0));metric('studentCount',ur.error?null:(ur.count??0));
  listingRows.innerHTML=items.map(x=>{const s=String(x.status||'unknown').toLowerCase();const cls=['active','sold','removed'].includes(s)?'status-'+s:'';return '<tr><td>'+escapeHtml(x.title)+'</td><td>'+money(x.price)+'</td><td>'+escapeHtml(x.category||'Other')+'</td><td>'+escapeHtml(String(x.seller_id||'').slice(0,8))+'…</td><td><span class="status-pill '+cls+'">'+escapeHtml(s)+'</span></td></tr>';}).join('');
  if(!items.length)listingRows.innerHTML='<tr><td colspan="5">No marketplace listings found.</td></tr>';
- if(!pr.error&&!ur.error){listingMessage.textContent='Overview updated successfully. Showing the latest '+items.length+' listings.';listingMessage.className='message success';}
+ if(!pr.error&&!ar.error&&!sr.error&&!ur.error){listingMessage.textContent='Overview updated successfully. Showing the latest '+items.length+' listings.';listingMessage.className='message success';}
  document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
 }
 async function handleSession(session){if(!session?.user){showLogin();return;}try{await verifyAdmin(session.user);showDashboard(session.user);await loadDashboardData();}catch(e){await db.auth.signOut();showLogin(e.message,true);}}
